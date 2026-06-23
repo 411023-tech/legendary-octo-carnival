@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>背單字App - 英文學習卡片</title>
+    <title>日文背單字 App</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <!-- 導覽列 -->
     <nav class="navbar">
         <div class="nav-container">
-            <h1 class="nav-title">📚 背單字App</h1>
+            <h1 class="nav-title">📚 日文背單字</h1>
             <div class="nav-buttons">
                 <button class="nav-btn active" id="learn-tab">學習</button>
                 <button class="nav-btn" id="manage-tab">管理</button>
@@ -28,8 +28,8 @@
                         <!-- 正面 -->
                         <div class="flip-card-front">
                             <div class="card-content">
-                                <span class="card-label">英文單字</span>
-                                <h2 id="card-word">Click me</h2>
+                                <span class="card-label">日文單字</span>
+                                <h2 id="card-word">點我翻牌</h2>
                                 <span class="flip-hint">💡 點擊翻頁</span>
                             </div>
                         </div>
@@ -84,9 +84,9 @@
                 <h3>新增單字</h3>
                 <form id="word-form">
                     <div class="form-group">
-                        <label for="input-word">英文單字 *</label>
+                        <label for="input-word">日文單字 *</label>
                         <div class="input-with-btn">
-                            <input type="text" id="input-word" placeholder="輸入英文單字" required>
+                            <input type="text" id="input-word" placeholder="輸入日文單字，例如：食べる" required>
                             <button type="button" id="auto-fill-btn" class="btn btn-secondary">🤖 自動填入</button>
                         </div>
                     </div>

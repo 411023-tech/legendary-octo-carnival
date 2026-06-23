@@ -137,7 +137,7 @@ function addWord(e) {
     const translation = inputTranslation.value.trim();
 
     if (!word || !translation) {
-        showToast('請填寫英文單字和翻譯', 'error');
+        showToast('請填寫日文單字和翻譯', 'error');
         return;
     }
 
@@ -168,7 +168,7 @@ async function autoFillWord() {
     const word = inputWord.value.trim();
 
     if (!word) {
-        showToast('請先輸入英文單字', 'error');
+        showToast('請先輸入日文單字', 'error');
         return;
     }
 
@@ -176,51 +176,67 @@ async function autoFillWord() {
     autoFillBtn.disabled = true;
 
     try {
-        // 調用 Free Dictionary API
-        const response = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${word}`);
-        
+        const response = await fetch(`https://jisho.org/api/v1/search/words?keyword=${encodeURIComponent(word)}`);
         if (!response.ok) {
             throw new Error('單字未找到');
         }
 
         const data = await response.json();
-        const entry = data[0];
-
-        // 提取翻譯 (第一個意義的簡短定義)
-        if (entry.meanings && entry.meanings.length > 0) {
-            const firstMeaning = entry.meanings[0];
-            
-            // 詞性
-            inputPos.value = firstMeaning.partOfSpeech || '';
-
-            // 翻譯 (從definitions提取)
-            if (firstMeaning.definitions && firstMeaning.definitions.length > 0) {
-                inputTranslation.value = firstMeaning.definitions[0].definition || '';
-
-                // 例句
-                if (firstMeaning.definitions[0].example) {
-                    inputExample.value = firstMeaning.definitions[0].example;
-                }
-            }
-
-            // 同義詞作為補充信息
-            if (firstMeaning.synonyms && firstMeaning.synonyms.length > 0) {
-                inputEtymology.value = `同義詞：${firstMeaning.synonyms.slice(0, 5).join(', ')}`;
-            }
-
-            // 如果有詞源信息，添加
-            if (entry.origin) {
-                inputEtymology.value += (inputEtymology.value ? '\n\n' : '') + `詞源：${entry.origin}`;
-            }
-
-            showToast(`已自動填入 "${word}" 的資訊`, 'success');
+        if (!data.data || data.data.length === 0) {
+            throw new Error('查無結果');
         }
+
+        const entry = data.data[0];
+        const japanese = (entry.japanese && entry.japanese[0]) || {};
+        const sense = (entry.senses && entry.senses[0]) || {};
+
+        inputWord.value = japanese.word || japanese.reading || word;
+        inputPos.value = sense.parts_of_speech ? sense.parts_of_speech.join('、') : '';
+        inputExample.value = '';
+
+        const englishDefinition = sense.english_definitions ? sense.english_definitions.join('；') : '';
+        inputTranslation.value = englishDefinition ? await translateToChinese(englishDefinition) : '';
+
+        const etymologyParts = [];
+        if (entry.tags && entry.tags.length > 0) {
+            etymologyParts.push(`標籤：${entry.tags.join('、')}`);
+        }
+        if (entry.is_common) {
+            etymologyParts.push('常用詞');
+        }
+        if (japanese.word && japanese.reading && japanese.word !== japanese.reading) {
+            etymologyParts.push(`讀音：${japanese.reading}`);
+        }
+        if (entry.jlpt && entry.jlpt.length > 0) {
+            etymologyParts.push(`JLPT：${entry.jlpt.join('、')}`);
+        }
+        inputEtymology.value = etymologyParts.join('\n');
+
+        showToast(`已自動填入「${word}」的資訊`, 'success');
     } catch (error) {
         console.error('API 錯誤:', error);
         showToast(`查詢失敗：${error.message}，請手動填入`, 'error');
     } finally {
         showLoading(false);
         autoFillBtn.disabled = false;
+    }
+}
+
+async function translateToChinese(text) {
+    if (!text) return '';
+
+    try {
+        const response = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=en|zh-TW`);
+        if (!response.ok) {
+            return text;
+        }
+
+        const data = await response.json();
+        const translated = data.responseData && data.responseData.translatedText;
+        return translated ? translated : text;
+    } catch (error) {
+        console.error('翻譯 API 錯誤:', error);
+        return text;
     }
 }
 
